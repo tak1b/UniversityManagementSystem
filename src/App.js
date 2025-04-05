@@ -15,6 +15,7 @@ import SingleStudent from './components/Students/SingleStudent';
 import CreateStudent from './components/Students/CreateStudent';
 import SetGrade from './components/Students/SetGrade';
 import SearchStudent from './components/Students/SearchStudent';
+import AssignModule from './components/Students/AssignModule';
 
 function App() {
   return (
@@ -37,8 +38,9 @@ function App() {
           <Route path="/module/:moduleCode" element={<SingleModule />} />
           <Route path="/student/:studentId" element={<SingleStudent />} />
           <Route path="/student/create" element={<CreateStudent />} />
-          <Route path="/setgrade/student/:studentId/module/:moduleCode" element={<SetGrade />} />
           <Route path="/student/search" element={<SearchStudent />} />
+          <Route path="/setgrade/student/:studentId/module/:moduleCode" element={<SetGrade />} />
+          <Route path="/assignmodule/:studentId" element={<AssignModule />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -1,4 +1,6 @@
+// src/components/Modules/CreateModule.jsx
 import React, { useState } from 'react';
+import { Box, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = "http://127.0.0.1:8000/api";
@@ -13,8 +15,14 @@ function CreateModule() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Split deliveredTo input by commas to form an array.
-    const deliveredToArr = deliveredTo.split(",").map(item => item.trim());
+    setError(null);
+    // Split the input and convert each cohort ID into a full URL.
+    const deliveredToArr = deliveredTo
+      .split(",")
+      .map(s => s.trim())
+      .filter(id => id !== "")
+      .map(cohortId => `${API_BASE}/cohort/${cohortId}/`);
+
     fetch(`${API_BASE}/module/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -22,21 +30,25 @@ function CreateModule() {
         code: code.trim(),
         full_name: fullName.trim(),
         ca_split: parseInt(caSplit, 10),
-        delivered_to: deliveredToArr
-      })
+        delivered_to: deliveredToArr,
+      }),
     })
-      .then(response => {
+      .then(async (response) => {
         if (!response.ok) {
-          throw new Error("Failed to create module");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            `Failed to create module: ${response.status} ${response.statusText} ${JSON.stringify(errorData)}`
+          );
         }
         return response.json();
       })
       .then(() => {
+        alert("Module created successfully.");
         navigate("/modules");
       })
       .catch(err => {
-        console.error(err);
-        setError("Error creating module. Please try again.");
+        console.error("Error creating module:", err);
+        setError(err.message);
       });
   };
 
@@ -44,48 +56,51 @@ function CreateModule() {
     <div>
       <h2>Create New Module</h2>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Module Code: </label>
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Full Name: </label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>CA Split: </label>
-          <input
-            type="number"
-            value={caSplit}
-            onChange={(e) => setCaSplit(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Delivered To (Comma-separated Cohort IDs): </label>
-          <input
-            type="text"
-            value={deliveredTo}
-            onChange={(e) => setDeliveredTo(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Create Module</button>
-      </form>
-      <p>
-        <button onClick={() => navigate("/modules")}>Back to All Modules</button>
-      </p>
+      <Box
+        component="form"
+        sx={{
+          '& .MuiTextField-root': { m: 1, width: '25ch' },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+        }}
+        noValidate
+        autoComplete="off"
+        onSubmit={handleSubmit}
+      >
+        <TextField
+          required
+          label="Module Code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <TextField
+          required
+          label="Full Name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+        />
+        <TextField
+          required
+          label="CA Split"
+          type="number"
+          value={caSplit}
+          onChange={(e) => setCaSplit(e.target.value)}
+        />
+        <TextField
+          required
+          label="Delivered To (Comma-separated Cohort IDs)"
+          value={deliveredTo}
+          onChange={(e) => setDeliveredTo(e.target.value)}
+        />
+        <Button type="submit" variant="contained">
+          Create Module
+        </Button>
+      </Box>
+      <Button variant="outlined" onClick={() => navigate("/modules")}>
+        Back to Modules
+      </Button>
     </div>
   );
 }

@@ -99,7 +99,7 @@ function SingleStudent() {
         </table>
       )}
       <p>
-        <Link to="/students">Back to Students</Link>
+        <Link to={`/assignmodule/${student.student_id}`}>Assign Module</Link>
       </p>
     </div>
   );
