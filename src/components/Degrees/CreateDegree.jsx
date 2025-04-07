@@ -1,4 +1,7 @@
-// src/components/Degrees/CreateDegree.jsx
+// CreateDegree.jsx
+// This component provides a form to create a new degree using Material-UI components.
+// It includes validation, error handling, and navigates back to the degrees list on success.
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,20 +16,25 @@ import {
 const API_BASE = "http://127.0.0.1:8000/api";
 
 function CreateDegree() {
+  // State for form fields.
   const [fullName, setFullName] = useState("");
   const [shortcode, setShortcode] = useState("");
+  // Error state to store any errors from validation or API.
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  // Handle form submission.
   const handleSubmit = (e) => {
     e.preventDefault();
     setError(null);
 
+    // Basic client-side validation.
     if (!fullName.trim() || !shortcode.trim()) {
       setError("Both Full Name and Shortcode are required.");
       return;
     }
 
+    // POST the new degree to the API.
     fetch(`${API_BASE}/degree/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -37,6 +45,7 @@ function CreateDegree() {
     })
       .then(async (res) => {
         if (!res.ok) {
+          // Try to parse error details from the API response.
           const errorData = await res.json().catch(() => ({}));
           throw new Error(
             `Failed to create degree: ${res.status} ${res.statusText} ${JSON.stringify(errorData)}`
@@ -46,6 +55,7 @@ function CreateDegree() {
       })
       .then(() => {
         alert("Degree created successfully.");
+        // Redirect back to the AllDegrees page on success.
         navigate("/degrees");
       })
       .catch((err) => {
@@ -68,6 +78,7 @@ function CreateDegree() {
           <Typography variant="h4" align="center" gutterBottom>
             Create New Degree
           </Typography>
+          {/* Display error message if one exists */}
           {error && (
             <Typography variant="body1" color="error" align="center">
               {error}

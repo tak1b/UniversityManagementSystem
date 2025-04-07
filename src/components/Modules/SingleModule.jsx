@@ -1,24 +1,34 @@
+// SingleModule.jsx
+// This component displays detailed information about a specific module,
+// including its full name, code, CA split, and which cohorts it is delivered to.
+// Additionally, it fetches and displays a table of students enrolled in this module
+// by fetching grade records and then retrieving full student details.
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
+import { API_BASE } from "../../api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
-
-// Helper to extract the last segment of a URL.
+// Helper function to extract the final segment from a URL.
 function parseHyperlink(url) {
   if (!url) return "";
   return url.replace(/\/$/, "").split("/").pop();
 }
 
 function SingleModule() {
+  // Extract moduleCode from URL parameters.
   const { moduleCode } = useParams();
+  // Local state to hold the module's details.
   const [moduleData, setModuleData] = useState(null);
+  // Local state to hold the list of students in the module.
   const [students, setStudents] = useState([]);
+  // Loading states for module details and student details.
   const [loadingModule, setLoadingModule] = useState(true);
   const [loadingStudents, setLoadingStudents] = useState(true);
+  // Error state to capture any errors.
   const [error, setError] = useState("");
 
-  // Fetch module details
+  // Fetch module details when the component mounts or when moduleCode changes.
   useEffect(() => {
     fetch(`${API_BASE}/module/${moduleCode}/`)
       .then((res) => res.json())
@@ -33,14 +43,14 @@ function SingleModule() {
       });
   }, [moduleCode]);
 
-  // Fetch grade records for the module, then fetch details for each unique student.
+  // Fetch grade records for this module, extract unique student IDs, and then fetch details for each student.
   useEffect(() => {
     fetch(`${API_BASE}/grade/?module=${moduleCode}`)
       .then((res) => res.json())
       .then((gradesData) => {
-        // Extract unique student IDs from grade records.
+        // Create a set of unique student IDs by parsing the 'student' field from each grade.
         const uniqueStudentIds = Array.from(new Set(gradesData.map((grade) => parseHyperlink(grade.student))));
-        // Fetch each student's details concurrently.
+        // For each student ID, fetch the student's details concurrently.
         Promise.all(
           uniqueStudentIds.map((id) =>
             fetch(`${API_BASE}/student/${id}/`)
@@ -51,7 +61,7 @@ function SingleModule() {
               })
           )
         ).then((studentDetails) => {
-          // Filter out any null responses.
+          // Filter out any null responses (if a fetch failed).
           setStudents(studentDetails.filter((s) => s !== null));
           setLoadingStudents(false);
         });
@@ -63,12 +73,16 @@ function SingleModule() {
       });
   }, [moduleCode]);
 
+  // If module details are still loading, show a loading message.
   if (loadingModule) return <p>Loading module details...</p>;
+  // If an error occurred, display the error message.
   if (error) return <p style={{ color: "red" }}>{error}</p>;
+  // If no module data is found, display a "not found" message.
   if (!moduleData) return <p>Module not found.</p>;
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+      {/* Display module details */}
       <Typography variant="h4" gutterBottom>
         Module: {moduleData.full_name} ({moduleData.code})
       </Typography>
@@ -78,6 +92,7 @@ function SingleModule() {
       <Typography variant="body1" gutterBottom>
         Delivered To: {moduleData.delivered_to.map((url) => parseHyperlink(url)).join(", ")}
       </Typography>
+      {/* Button to navigate back to the list of modules */}
       <Button variant="outlined" component={Link} to="/modules" sx={{ mt: 2 }}>
         Back to All Modules
       </Button>
@@ -109,6 +124,7 @@ function SingleModule() {
                   <TableCell>{student.last_name}</TableCell>
                   <TableCell>{student.email}</TableCell>
                   <TableCell>
+                    {/* Button linking to the SingleStudent page for this student */}
                     <Button variant="contained" component={Link} to={`/student/${student.student_id}`}>
                       View Student
                     </Button>
